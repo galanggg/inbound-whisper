@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  inbound-whisper-app:
+    build:
+      context: . # Assumes your Dockerfile is in the current directory (project root)
+      # dockerfile: Dockerfile # Uncomment if your Dockerfile has a non-standard name
+    container_name: inbound-whisper-service
+    ports:
+      - "3000:3000" # Maps host port 3000 to container port 3000
+    volumes:
+      # Mounts your local application code into the container for hot reloading.
+      # IMPORTANT: Adjust '/usr/src/app' to match the WORKDIR in your Dockerfile.
+      # If your WORKDIR is /app/api, change it to .:/app/api
+      - .:/app/api
+
+      # Mounts node_modules separately to use the container's version.
+      # IMPORTANT: Adjust '/usr/src/app/node_modules' to match WORKDIR/node_modules
+      - /app/api/node_modules
+
+      # Creates a named volume for persisting Whisper models and ensuring the
+      # download script's directory (/app/whisper.cpp/models) is available.
+      # Your server.js expects models and the download script here.
+      - whisper_models_volume:/app/whisper.cpp/models
+    command: npm run dev # Runs your 'dev' script from package.json
+    environment:
+      - NODE_ENV=development
+      - PORT=3000 # Your server.js uses process.env.PORT || 3000
+      # Add any other environment variables your application needs
+    # restart: unless-stopped # Optional: for production-like behavior
+
+volumes:
+  whisper_models_volume: # Defines the named volume for model persistence
+    # driver: local # Default driver
